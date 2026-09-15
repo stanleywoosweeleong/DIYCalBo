@@ -1,5 +1,5 @@
 // DIY CalBo — network-first service worker. Bump CACHE on every deploy.
-const CACHE = "calbo-v1.0.4-20260915";
+const CACHE = "calbo-v1.0.5-20260915";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
