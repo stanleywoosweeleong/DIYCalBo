@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7b2150">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="钙硼液">
+<meta name="description" content="自制钙硼液 DIY CalBo — Mr. Ganick 配方计算器：泡制、稀释、成本、记录">
+<title>自制钙硼液 · DIY CalBo</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+:root{
+  --plum:#7b2150; --plum-deep:#561436; --plum-tint:#f6eaf0;
+  --tong:#1e4fa8; --tong-tint:#e8eefb;
+  --brew:#9a5a12; --brew-tint:#fbefdc;
+  --leaf:#2f6b3a; --leaf-tint:#e7f2e8;
+  --ink:#241a20; --ink-2:#5c4d56; --ink-3:#8f8189;
+  --line:#e6dde2; --paper:#ffffff; --field:#fbf9fa;
+  --r:14px; --r-s:9px;
+  --nav-h:62px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:-apple-system,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+:focus-visible{outline:3px solid #f0b9d3;outline-offset:2px}
+
+/* header */
+header{position:sticky;top:0;z-index:20;background:var(--plum);color:#fff;
+  padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;display:flex;align-items:center;gap:10px}
+header .t{flex:1;min-width:0}
+header h1{margin:0;font-size:1.15rem;font-weight:700;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .sub{font-size:.78rem;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#langBtn{border:1.5px solid rgba(255,255,255,.7);background:transparent;color:#fff;border-radius:999px;
+  padding:5px 12px;font-weight:700;min-width:58px;font-size:.9rem}
+
+main{padding:14px 14px calc(var(--nav-h) + env(safe-area-inset-bottom) + 20px);max-width:640px;margin:0 auto}
+.tab{display:none}.tab.on{display:block}
+
+/* settings block — always visible */
+.settings{background:var(--field);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 4px;margin-bottom:14px}
+.settings h2{margin:0 0 8px;font-size:.82rem;font-weight:700;color:var(--ink-2)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .lab{flex:1;min-width:0;font-size:.95rem}
+.row .lab small{display:block;color:var(--ink-3);font-size:.76rem;line-height:1.3}
+.num{display:flex;align-items:center;gap:6px}
+.num input{width:78px;text-align:right;padding:8px 8px;border:1.5px solid var(--line);border-radius:var(--r-s);background:#fff;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.num input.wide{width:96px}
+.num .u{color:var(--ink-3);font-size:.85rem;min-width:22px}
+.stepper{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:var(--r-s);background:#fff;overflow:hidden}
+.stepper button{width:40px;height:40px;border:0;background:#fff;font-size:1.3rem;color:var(--plum);font-weight:700}
+.stepper button:active{background:var(--plum-tint)}
+.stepper input{width:54px;height:40px;border:0;border-left:1.5px solid var(--line);border-right:1.5px solid var(--line);text-align:center;font-size:1.1rem;font-weight:700}
+.toggle{position:relative;width:50px;height:30px;border-radius:999px;background:#d9cfd5;border:0;transition:background .15s}
+.toggle[aria-checked=true]{background:var(--leaf)}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.toggle[aria-checked=true]::after{transform:translateX(20px)}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:var(--r-s);overflow:hidden;background:#fff}
+.seg button{border:0;background:#fff;padding:7px 12px;font-weight:600;color:var(--ink-2);border-left:1.5px solid var(--line)}
+.seg button:first-child{border-left:0}
+.seg button.on{background:var(--plum);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:6px 0 10px}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:.85rem;color:var(--ink-2)}
+.chip.on{border-color:var(--plum);color:var(--plum);background:var(--plum-tint);font-weight:600}
+
+/* results */
+.card{border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px;background:#fff}
+.card h3{margin:0 0 10px;font-size:1rem;font-weight:700}
+.big{font-size:2.1rem;font-weight:800;line-height:1.05;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.big small{font-size:1rem;font-weight:600;color:var(--ink-2);margin-left:4px}
+.hint{font-size:.82rem;color:var(--ink-2);margin-top:6px}
+.note{font-size:.8rem;color:var(--brew);background:var(--brew-tint);border-radius:var(--r-s);padding:8px 10px;margin-top:10px;line-height:1.4}
+.ing{list-style:none;margin:0;padding:0}
+.ing li{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.ing li:first-child{border-top:0}
+.ing .sw{width:12px;height:12px;border-radius:3px;flex:none}
+.ing .nm{flex:1;min-width:0}
+.ing .nm small{display:block;color:var(--ink-3);font-size:.76rem}
+.ing .qty{font-weight:800;font-size:1.25rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ing .qty small{font-size:.8rem;font-weight:600;color:var(--ink-2);margin-left:2px}
+.ing li.off{opacity:.42}
+
+/* brew hero */
+.hero{display:flex;gap:14px;align-items:center;background:var(--tong-tint);border-radius:var(--r);padding:12px 14px;margin-bottom:12px}
+.hero svg{flex:none}
+.hero .txt{flex:1;min-width:0}
+.hero .txt b{display:block;font-size:1.05rem}
+.hero .txt > span{display:block;font-size:.85rem;color:var(--ink-2)}
+.badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.badge{display:inline-block;background:var(--plum);color:#fff!important;border-radius:999px;padding:3px 9px;font-size:.78rem;font-weight:700}
+
+/* steps */
+.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{position:relative;padding:10px 0 10px 40px;border-top:1px solid var(--line);counter-increment:s}
+.steps li:first-child{border-top:0}
+.steps li::before{content:counter(s);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--plum-tint);color:var(--plum);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.steps li b{display:block}
+.steps li span{font-size:.86rem;color:var(--ink-2)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--ink-2);font-size:.8rem}
+tfoot td{font-weight:800;border-bottom:0}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cmp>div{border-radius:var(--r-s);padding:10px 12px}
+.cmp .diy{background:var(--leaf-tint)}
+.cmp .mkt{background:var(--plum-tint)}
+.cmp .k{font-size:.78rem;color:var(--ink-2)}
+.cmp .v{font-size:1.4rem;font-weight:800;font-variant-numeric:tabular-nums}
+.save{margin-top:10px;font-size:1.05rem;font-weight:700;color:var(--leaf)}
+
+/* log */
+.btn{border:0;background:var(--plum);color:#fff;border-radius:var(--r-s);padding:12px 16px;font-weight:700;width:100%;font-size:1rem}
+.btn.ghost{background:#fff;color:var(--plum);border:1.5px solid var(--plum)}
+.btn.sm{width:auto;padding:8px 12px;font-size:.86rem}
+.btn.danger{background:#fff;color:#a12b2b;border:1.5px solid #e6c3c3}
+.brew{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:10px;border-left:6px solid var(--brew)}
+.brew.ready{border-left-color:var(--leaf)}
+.brew.done{border-left-color:#bbb;opacity:.75}
+.brew .top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;align-items:baseline}
+.brew .top b{font-size:1.02rem}
+.brew .st{font-weight:700;color:var(--brew)}
+.brew.ready .st{color:var(--leaf)}
+.brew .meta{font-size:.84rem;color:var(--ink-2);margin-top:4px}
+.brew .acts{display:flex;gap:8px;margin-top:10px}
+.empty{text-align:center;color:var(--ink-3);padding:24px 10px;font-size:.92rem}
+.bar{height:8px;border-radius:4px;background:var(--line);margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--brew);border-radius:4px}
+.brew.ready .bar i{background:var(--leaf)}
+
+/* nav */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:1px solid var(--line);
+  display:flex;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:#fff;color:var(--ink-3);font-size:.72rem;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--plum)}
+footer{font-size:.76rem;color:var(--ink-3);padding:6px 2px 0;line-height:1.5}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (min-width:640px){main{padding-top:20px}.settings{padding:14px 16px 6px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="t"><h1 data-i="title">自制钙硼液</h1><div class="sub" data-i="subtitle">Mr. Ganick 配方 · 泡制 · 稀释 · 成本</div></div>
+  <button id="langBtn" aria-label="Language">中文</button>
+</header>
+
+<main>
+<!-- ===== BREW ===== -->
+<section class="tab on" id="tab-brew">
+  <div class="settings">
+    <h2 data-i="brewSet">泡制设定</h2>
+    <div class="row"><div class="lab"><span data-i="tongs">20 L 桶数</span><small data-i="tongsHint">1 桶 = 传单原配方，过滤后约得 3 L 浓缩液</small></div>
+      <div class="stepper"><button id="tMinus" aria-label="-">−</button><input type="number" id="tongs" inputmode="numeric" min="1" max="99" value="1"><button id="tPlus" aria-label="+">+</button></div></div>
+    <div class="row"><div class="lab"><span data-i="epsom">加泻盐（额外镁 Mg）</span><small data-i="epsomHint">只在需要额外镁成分时另外添加</small></div>
+      <button class="toggle" id="epsom" role="switch" aria-checked="false"></button></div>
+  </div>
+
+  <div class="hero">
+    <svg width="92" height="104" viewBox="0 0 92 104" aria-hidden="true">
+      <path d="M12 22 h68 v66 a8 8 0 0 1 -8 8 h-52 a8 8 0 0 1 -8 -8z" fill="#1e4fa8"/>
+      <rect x="8" y="16" width="76" height="12" rx="4" fill="#3b6fd0"/>
+      <ellipse cx="46" cy="22" rx="30" ry="6" fill="#2a5cbf"/>
+      <path id="liq" d="M18 40 h56 v46 a6 6 0 0 1 -6 6 h-44 a6 6 0 0 1 -6 -6z" fill="#9a5a12" opacity=".95"/>
+      <ellipse cx="46" cy="40" rx="28" ry="5" fill="#c7852a"/>
+      <circle cx="30" cy="60" r="3" fill="#fff" opacity=".35"/><circle cx="58" cy="72" r="2" fill="#fff" opacity=".35"/><circle cx="50" cy="52" r="1.6" fill="#fff" opacity=".35"/>
+    </svg>
+    <div class="txt">
+      <b id="yieldLine">≈ 3 L 浓缩液</b>
+      <span data-i="analysis">目标成分（传单标示）</span>
+      <div class="badges"><span class="badge">Ca 12%</span><span class="badge" id="mgBadge">Mg 5%</span><span class="badge">B 0.1–1.2%</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 data-i="ingredients">材料</h3>
+    <ul class="ing">
+      <li><span class="sw" style="background:#2f6b3a"></span><div class="nm">Bamboosa Extract<small data-i="bamboosaS">竹萃取液（Mr. Ganick 4 L 装）</small></div><div class="qty" id="qBamb"></div></li>
+      <li><span class="sw" style="background:#c9b23a"></span><div class="nm">Calcite-M<small data-i="calciteS">钙粉（4 kg 装）</small></div><div class="qty" id="qCalc"></div></li>
+      <li><span class="sw" style="background:#7b2150"></span><div class="nm">Borax<small data-i="boraxS">硼砂</small></div><div class="qty" id="qBor"></div></li>
+      <li id="liEpsom" class="off"><span class="sw" style="background:#1e4fa8"></span><div class="nm">Epsom Salt<small data-i="epsomS">泻盐（硫酸镁）— 可选</small></div><div class="qty" id="qEps"></div></li>
+      <li><span class="sw" style="background:#3b6fd0"></span><div class="nm" data-i="tongLine">20 L 塑料桶（每桶一份）</div><div class="qty" id="qTong"></div></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3 data-i="method">做法</h3>
+    <ol class="steps">
+      <li><b data-i="s1">材料全部放入 20 L 桶</b><span data-i="s1h">每桶：4 L Bamboosa + 4 kg Calcite-M + 8 g 硼砂（如需镁另加 1.3 kg 泻盐）</span></li>
+      <li><b data-i="s2">浸泡 + 搅拌：1–7 夜或以上</b><span data-i="s2h">每天搅拌一次；泡得越久越足</span></li>
+      <li><b data-i="s3">过滤，取约 3 L 浓缩液</b><span data-i="s3h">这就是 DIY CalBo 钙硼液，之后按「稀释」页比例兑水使用</span></li>
+    </ol>
+    <div class="note" data-i="brewNote">泡好后到「记录」页记下开始日期，软件会算出可以过滤的日子。</div>
+  </div>
+</section>
+
+<!-- ===== SPRAY ===== -->
+<section class="tab" id="tab-spray">
+  <div class="settings">
+    <h2 data-i="spraySet">稀释设定</h2>
+    <div class="row"><div class="lab"><span data-i="tank">水量（每桶）</span><small data-i="tankHint">传单以 10 L 水为基准</small></div>
+      <div class="num"><input type="number" id="tank" inputmode="decimal" min="1" step="1" value="10"><span class="u">L</span></div></div>
+    <div class="row"><div class="lab"><span data-i="ntank">桶数</span></div>
+      <div class="stepper"><button id="nMinus" aria-label="-">−</button><input type="number" id="ntank" inputmode="numeric" min="1" max="999" value="1"><button id="nPlus" aria-label="+">+</button></div></div>
+    <div class="row"><div class="lab"><span data-i="calboRate">DIY CalBo 钙硼液</span><small data-i="calboRateHint">传单：每 10 L 水 20–30 ml</small></div>
+      <div class="seg" id="calboSeg"><button data-v="20">20</button><button data-v="25">25</button><button data-v="30">30</button></div></div>
+  </div>
+
+  <div class="card">
+    <h3 id="perTankH">每桶 10 L 水加入</h3>
+    <ul class="ing">
+      <li><span class="sw" style="background:#9a5a12"></span><div class="nm">DIY CalBo <small data-i="calboS">自制钙硼液</small></div><div class="qty" id="dCalbo"></div></li>
+    </ul>
+    <div class="hint" id="totLine"></div>
+  </div>
+
+  <div class="card">
+    <h3 data-i="use">用法</h3>
+    <ul class="ing">
+      <li><span class="sw" style="background:#2f6b3a"></span><div class="nm" data-i="foliar">喷洒叶子（叶面喷施）</div></li>
+      <li><span class="sw" style="background:#9a5a12"></span><div class="nm" data-i="drench">浇灌土地（根部浇灌）</div></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3 data-i="coverage">一次泡制够用多少</h3>
+    <div class="big" id="covTanks"></div>
+    <div class="hint" id="covLine"></div>
+  </div>
+</section>
+
+<!-- ===== COST ===== -->
+<section class="tab" id="tab-cost">
+  <div class="settings">
+    <h2 data-i="costSet">价格设定</h2>
+    <div class="chips"><button class="chip" id="pSmall" data-i="pSmall">恢复传单价</button></div>
+    <div class="row"><div class="lab">Bamboosa Extract<small data-i="per4L">RM / 4 L</small></div><div class="num"><span class="u">RM</span><input type="number" id="pBamb" inputmode="decimal" min="0" step="0.01" value="62"></div></div>
+    <div class="row"><div class="lab">Calcite-M<small data-i="per4kg">RM / 4 kg</small></div><div class="num"><span class="u">RM</span><input type="number" id="pCalc" inputmode="decimal" min="0" step="0.01" value="39"></div></div>
+    <div class="row"><div class="lab">Borax<small data-i="perkg">RM / kg</small></div><div class="num"><span class="u">RM</span><input type="number" id="pBor" inputmode="decimal" min="0" step="0.01" value="8"></div></div>
+    <div class="row" id="rowEps"><div class="lab">Epsom Salt<small data-i="epsPrice">RM / kg — 传单没有列价，请自行输入</small></div><div class="num"><span class="u">RM</span><input type="number" id="pEps" inputmode="decimal" min="0" step="0.01" placeholder="—"></div></div>
+    <div class="row"><div class="lab"><span data-i="market">市售 CalMagBo 价</span><small data-i="marketHint">传单：RM40–45 / L</small></div>
+      <div class="num"><input type="number" id="mLo" inputmode="decimal" min="0" step="1" value="40"><span class="u">–</span><input type="number" id="mHi" inputmode="decimal" min="0" step="1" value="45"></div></div>
+  </div>
+
+  <div class="card">
+    <h3 id="costH">成本（1 桶 → 3 L）</h3>
+    <table>
+      <thead><tr><th data-i="thItem">材料</th><th data-i="thQty">用量</th><th>RM</th></tr></thead>
+      <tbody id="costBody"></tbody>
+      <tfoot><tr><td data-i="total">合计</td><td id="cYield"></td><td id="cTotal"></td></tr></tfoot>
+    </table>
+    <div class="note" id="epsNote" hidden data-i="epsNote">泻盐未输入价格，合计不含泻盐。</div>
+  </div>
+
+  <div class="card">
+    <h3 data-i="compare">每公升比较</h3>
+    <div class="cmp">
+      <div class="diy"><div class="k">DIY CalBo</div><div class="v" id="cPerL"></div><div class="k">RM / L</div></div>
+      <div class="mkt"><div class="k" data-i="mktLab">市售 CalMagBo</div><div class="v" id="cMkt"></div><div class="k">RM / L</div></div>
+    </div>
+    <div class="save" id="saveLine"></div>
+  </div>
+</section>
+
+<!-- ===== LOG ===== -->
+<section class="tab" id="tab-log">
+  <div class="settings">
+    <h2 data-i="newBrew">新泡制</h2>
+    <div class="row"><div class="lab" data-i="startDate">开始日期</div><div class="num"><input type="date" id="bDate" class="wide" style="width:150px;text-align:left"></div></div>
+    <div class="row"><div class="lab" data-i="tongs2">桶数</div>
+      <div class="stepper"><button id="bMinus" aria-label="-">−</button><input type="number" id="bTongs" inputmode="numeric" min="1" max="99" value="1"><button id="bPlus" aria-label="+">+</button></div></div>
+    <div class="row"><div class="lab" data-i="withEpsom">加泻盐</div><button class="toggle" id="bEpsom" role="switch" aria-checked="false"></button></div>
+    <div class="row" style="border-top:0;padding-top:4px"><button class="btn" id="addBrew" data-i="addBrew">记下泡制</button></div>
+  </div>
+  <div id="brews"></div>
+  <footer data-i="footer">资料来源：Mr. Ganick DIY CalBo 传单（Rendam + Kacau 1–7 malam）。软件离线可用；记录只存在本机。</footer>
+</section>
+</main>
+
+<nav>
+  <button data-tab="brew" class="on"><svg viewBox="0 0 24 24"><path d="M6 4h12v14a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z"/><path d="M6 10h12"/></svg><span data-i="nBrew">泡制</span></button>
+  <button data-tab="spray"><svg viewBox="0 0 24 24"><path d="M9 3h6v4H9z"/><path d="M8 7h8l1 12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z"/><path d="M19 6l2-1M19 9h2M19 3l1.5 1.5"/></svg><span data-i="nSpray">稀释</span></button>
+  <button data-tab="cost"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/></svg><span data-i="nCost">成本</span></button>
+  <button data-tab="log"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="M8 2v4M16 2v4M4 10h16M8 15l2 2 4-4"/></svg><span data-i="nLog">记录</span></button>
+</nav>
+
+<script>
+/* ---------- i18n ---------- */
+const I18N={
+zh:{
+ title:"自制钙硼液",subtitle:"Mr. Ganick 配方 · 泡制 · 稀释 · 成本",
+ brewSet:"泡制设定",tongs:"20 L 桶数",tongsHint:"1 桶 = 传单原配方，过滤后约得 3 L 浓缩液",epsom:"加泻盐（额外镁 Mg）",epsomHint:"只在需要额外镁成分时另外添加",
+ yield:"≈ {n} L 浓缩液",analysis:"目标成分（传单标示）",ingredients:"材料",bamboosaS:"竹萃取液（Mr. Ganick 4 L 装）",calciteS:"钙粉（4 kg 装）",boraxS:"硼砂",epsomS:"泻盐（硫酸镁）— 可选",tongLine:"20 L 塑料桶",
+ method:"做法",s1:"材料全部放入 20 L 桶",s1h:"每桶：4 L Bamboosa + 4 kg Calcite-M + 8 g 硼砂（如需镁另加 1.3 kg 泻盐）",s2:"浸泡 + 搅拌：1–7 夜或以上",s2h:"每天搅拌一次；泡得越久越足",s3:"过滤，取约 3 L 浓缩液",s3h:"这就是 DIY CalBo 钙硼液，之后按「稀释」页比例兑水使用",brewNote:"泡好后到「记录」页记下开始日期，软件会算出可以过滤的日子。",
+ spraySet:"稀释设定",tank:"水量（每桶）",tankHint:"传单以 10 L 水为基准",ntank:"桶数",calboRate:"DIY CalBo 钙硼液",calboRateHint:"传单：每 10 L 水 20–30 ml",
+ perTank:"每桶 {t} L 水加入",calboS:"自制钙硼液",totAll:"{n} 桶共 {w} L 水，共需钙硼液 {a} ml",use:"用法",foliar:"喷洒叶子（叶面喷施）",drench:"浇灌土地（根部浇灌）",
+ coverage:"一次泡制够用多少",covTanks:"{k} 桶",covLine:"{y} L 浓缩液，每桶 {t} L 水加 {r} ml，可兑成约 {w} L 喷洒液（按「泡制」页 {n} 桶算）",
+ costSet:"价格设定",pSmall:"恢复传单价",per4L:"RM / 4 L",per4kg:"RM / 4 kg",perkg:"RM / kg",epsPrice:"RM / kg — 传单没有列价，请自行输入",market:"市售 CalMagBo 价",marketHint:"传单：RM40–45 / L",
+ costH:"成本（{n} 桶 → {y} L）",thItem:"材料",thQty:"用量",total:"合计",epsNote:"泻盐未输入价格，合计不含泻盐。",compare:"每公升比较",mktLab:"市售 CalMagBo",
+ save:"省 {lo}–{hi}%",saveOne:"省 {lo}%",noSave:"比市售贵 — 请检查价格",
+ newBrew:"新泡制",startDate:"开始日期",tongs2:"桶数",withEpsom:"加泻盐",addBrew:"记下泡制",
+ nBrew:"泡制",nSpray:"稀释",nCost:"成本",nLog:"记录",
+ empty:"还没有记录。泡制开始时记下日期，软件会告诉你哪天可以过滤。",
+ stSoak:"浸泡中 — 明天起可过滤",stReady:"可过滤（第 {d} 夜 / 7）",stFull:"已泡足 7 夜 — 可过滤",stDone:"已过滤",
+ metaBrew:"{n} 桶{e} · 开始 {d} · 最早过滤 {d1} · 泡足 7 夜 {d7}",metaDone:"{n} 桶{e} · 开始 {d} · 过滤 {df} · 约 {y} L 浓缩液",
+ eYes:"（加泻盐）",eNo:"",filtered:"已过滤",del:"删除",confirmDel:"删除这条记录？",
+ footer:"资料来源：Mr. Ganick DIY CalBo 传单（Rendam + Kacau 1–7 malam）。软件离线可用；记录只存在本机。"
+},
+en:{
+ title:"DIY CalBo",subtitle:"Mr. Ganick recipe · brew · dilute · cost",
+ brewSet:"Brew settings",tongs:"20 L drums",tongsHint:"1 drum = the flyer recipe, ≈ 3 L concentrate after filtering",epsom:"Add Epsom salt (extra Mg)",epsomHint:"Add separately only if extra magnesium is needed",
+ yield:"≈ {n} L concentrate",analysis:"Target analysis (as printed)",ingredients:"Ingredients",bamboosaS:"bamboo extract (Mr. Ganick 4 L)",calciteS:"calcium powder (4 kg bag)",boraxS:"borax",epsomS:"magnesium sulphate — optional",tongLine:"20 L plastic drum",
+ method:"Method",s1:"Put everything into the 20 L drum",s1h:"Per drum: 4 L Bamboosa + 4 kg Calcite-M + 8 g borax (+ 1.3 kg Epsom salt if Mg is needed)",s2:"Soak + stir: 1–7 nights or more",s2h:"Stir once a day; longer is stronger",s3:"Filter — about 3 L concentrate",s3h:"This is your DIY CalBo. Dilute it as shown on the Dilute page",brewNote:"When you start a brew, note the date on the Log page and the app will show the filtering days.",
+ spraySet:"Dilution settings",tank:"Water (per tank)",tankHint:"The flyer uses 10 L water as the base",ntank:"Tanks",calboRate:"DIY CalBo",calboRateHint:"Flyer: 20–30 ml per 10 L water",
+ perTank:"Per tank of {t} L water",calboS:"home-made calcium boron",totAll:"{n} tanks = {w} L water, {a} ml CalBo in total",use:"How to apply",foliar:"Foliar spray on leaves",drench:"Soil drench around the root zone",
+ coverage:"How far one brew goes",covTanks:"{k} tanks",covLine:"{y} L concentrate at {r} ml per {t} L tank ≈ {w} L spray solution (from {n} drum(s) on the Brew page)",
+ costSet:"Price settings",pSmall:"Reset to flyer prices",per4L:"RM per 4 L",per4kg:"RM per 4 kg",perkg:"RM per kg",epsPrice:"RM per kg — not on the flyer, enter your own",market:"Retail CalMagBo price",marketHint:"Flyer: RM40–45 per L",
+ costH:"Cost ({n} drum(s) → {y} L)",thItem:"Item",thQty:"Qty",total:"Total",epsNote:"No Epsom salt price entered — total excludes Epsom salt.",compare:"Per litre",mktLab:"Retail CalMagBo",
+ save:"Save {lo}–{hi}%",saveOne:"Save {lo}%",noSave:"Costs more than retail — check the prices",
+ newBrew:"New brew",startDate:"Start date",tongs2:"Drums",withEpsom:"With Epsom salt",addBrew:"Log this brew",
+ nBrew:"Brew",nSpray:"Dilute",nCost:"Cost",nLog:"Log",
+ empty:"No brews yet. Log the start date and the app will tell you when you can filter.",
+ stSoak:"Soaking — filter from tomorrow",stReady:"Ready to filter (night {d} of 7)",stFull:"7 nights done — ready to filter",stDone:"Filtered",
+ metaBrew:"{n} drum(s){e} · started {d} · earliest filter {d1} · full 7 nights {d7}",metaDone:"{n} drum(s){e} · started {d} · filtered {df} · ≈ {y} L concentrate",
+ eYes:" + Epsom",eNo:"",filtered:"Filtered",del:"Delete",confirmDel:"Delete this brew record?",
+ footer:"Source: Mr. Ganick DIY CalBo flyer (soak + stir 1–7 nights). Works offline; records stay on this device."
+},
+ms:{
+ title:"CalBo Buat Sendiri",subtitle:"Resipi Mr. Ganick · rendam · cair · kos",
+ brewSet:"Tetapan rendaman",tongs:"Tong 20 L",tongsHint:"1 tong = resipi asal risalah, ≈ 3 L pekat selepas tapis",epsom:"Tambah garam Epsom (Mg tambahan)",epsomHint:"Tambah secara berasingan hanya jika perlu magnesium tambahan",
+ yield:"≈ {n} L cecair pekat",analysis:"Kandungan sasaran (seperti risalah)",ingredients:"Bahan-bahan",bamboosaS:"ekstrak buluh (Mr. Ganick 4 L)",calciteS:"serbuk kalsium (beg 4 kg)",boraxS:"boraks",epsomS:"magnesium sulfat — pilihan",tongLine:"Tong plastik 20 L",
+ method:"Cara buat",s1:"Masukkan semua bahan ke dalam tong 20 L",s1h:"Setiap tong: 4 L Bamboosa + 4 kg Calcite-M + 8 g boraks (+ 1.3 kg garam Epsom jika perlu Mg)",s2:"Rendam + kacau: 1–7 malam atau lebih",s2h:"Kacau sekali sehari; lebih lama lebih pekat",s3:"Tapis — dapat kira-kira 3 L pekat",s3h:"Inilah DIY CalBo. Cairkan ikut halaman Cair",brewNote:"Bila mula rendam, catat tarikh di halaman Rekod dan aplikasi akan tunjuk hari boleh tapis.",
+ spraySet:"Tetapan cairan",tank:"Air (setiap tangki)",tankHint:"Risalah guna 10 L air sebagai asas",ntank:"Bilangan tangki",calboRate:"DIY CalBo",calboRateHint:"Risalah: 20–30 ml setiap 10 L air",
+ perTank:"Setiap tangki {t} L air",calboS:"kalsium boron buat sendiri",totAll:"{n} tangki = {w} L air, {a} ml CalBo kesemuanya",use:"Cara guna",foliar:"Semburan daun",drench:"Siraman tanah di kawasan akar",
+ coverage:"Satu rendaman cukup untuk berapa",covTanks:"{k} tangki",covLine:"{y} L pekat pada {r} ml setiap tangki {t} L ≈ {w} L cecair sembur (dari {n} tong di halaman Rendam)",
+ costSet:"Tetapan harga",pSmall:"Kembali ke harga risalah",per4L:"RM setiap 4 L",per4kg:"RM setiap 4 kg",perkg:"RM setiap kg",epsPrice:"RM setiap kg — tiada dalam risalah, masukkan sendiri",market:"Harga CalMagBo pasaran",marketHint:"Risalah: RM40–45 setiap L",
+ costH:"Kos ({n} tong → {y} L)",thItem:"Bahan",thQty:"Kadar",total:"Jumlah",epsNote:"Harga garam Epsom belum dimasukkan — jumlah tidak termasuk garam Epsom.",compare:"Setiap liter",mktLab:"CalMagBo pasaran",
+ save:"Jimat {lo}–{hi}%",saveOne:"Jimat {lo}%",noSave:"Lebih mahal daripada pasaran — semak harga",
+ newBrew:"Rendaman baru",startDate:"Tarikh mula",tongs2:"Tong",withEpsom:"Dengan garam Epsom",addBrew:"Catat rendaman",
+ nBrew:"Rendam",nSpray:"Cair",nCost:"Kos",nLog:"Rekod",
+ empty:"Belum ada rekod. Catat tarikh mula dan aplikasi akan beritahu bila boleh tapis.",
+ stSoak:"Sedang rendam — boleh tapis mulai esok",stReady:"Boleh tapis (malam ke-{d} / 7)",stFull:"Cukup 7 malam — boleh tapis",stDone:"Sudah ditapis",
+ metaBrew:"{n} tong{e} · mula {d} · tapis terawal {d1} · cukup 7 malam {d7}",metaDone:"{n} tong{e} · mula {d} · ditapis {df} · ≈ {y} L pekat",
+ eYes:" + Epsom",eNo:"",filtered:"Sudah tapis",del:"Padam",confirmDel:"Padam rekod ini?",
+ footer:"Sumber: risalah Mr. Ganick DIY CalBo (rendam + kacau 1–7 malam). Berfungsi luar talian; rekod disimpan dalam peranti ini sahaja."
+}};
+const LANG_LABEL={zh:"中文",en:"EN",ms:"BM"};
+const LANG_ORDER=["zh","en","ms"];
+const LOCALE={zh:"zh-CN",en:"en-MY",ms:"ms-MY"};
+
+/* ---------- recipe constants (per 20 L drum, from the flyer) ---------- */
+const BASE={bamb:4, calc:4, bor:8, eps:1.3, yieldL:3};
+const PRESET={
+  small:{bamb:62, calc:39, bor:8}           // flyer 3 L batch: RM62/4L, RM39/4kg, RM0.064/8g → RM8/kg
+};
+
+/* ---------- state ---------- */
+const $=id=>document.getElementById(id);
+let lang=localStorage.getItem("calbo.lang")||"zh";
+let S=Object.assign({tongs:1,epsom:false,tank:10,ntank:1,calbo:20,pBamb:62,pCalc:39,pBor:8,pEps:"",mLo:40,mHi:45},JSON.parse(localStorage.getItem("calbo.settings")||"{}"));
+let brews=JSON.parse(localStorage.getItem("calbo.brews")||"[]");
+const saveS=()=>localStorage.setItem("calbo.settings",JSON.stringify(S));
+const saveB=()=>localStorage.setItem("calbo.brews",JSON.stringify(brews));
+
+const t=(k,v)=>{let s=(I18N[lang][k]??I18N.zh[k]??k);if(v)for(const x in v)s=s.split("{"+x+"}").join(v[x]);return s;};
+const fmt=(n,d=0)=>Number(n).toLocaleString(LOCALE[lang],{maximumFractionDigits:d,minimumFractionDigits:0});
+const fmtRM=n=>Number(n).toLocaleString(LOCALE[lang],{minimumFractionDigits:2,maximumFractionDigits:2});
+const num=(id,def)=>{const v=parseFloat($(id).value);return isFinite(v)&&v>=0?v:def;};
+const q=(v,u,d=0)=>`${fmt(v,d)}<small>${u}</small>`;
+
+/* ---------- render ---------- */
+function applyLang(){
+  document.documentElement.lang=lang==="zh"?"zh":lang;
+  $("langBtn").textContent=LANG_LABEL[lang];
+  document.querySelectorAll("[data-i]").forEach(el=>{el.textContent=t(el.dataset.i);});
+  document.title=lang==="zh"?"自制钙硼液 · DIY CalBo":"DIY CalBo · 自制钙硼液";
+  renderAll();
+}
+function renderBrew(){
+  const n=S.tongs, e=S.epsom;
+  $("tongs").value=n; $("epsom").setAttribute("aria-checked",e);
+  $("yieldLine").textContent=t("yield",{n:fmt(BASE.yieldL*n)});
+  $("mgBadge").style.display=e?"":"none";
+  $("qBamb").innerHTML=q(BASE.bamb*n,"L");
+  $("qCalc").innerHTML=q(BASE.calc*n,"kg");
+  $("qBor").innerHTML=q(BASE.bor*n,"g");
+  $("qEps").innerHTML=q(BASE.eps*n,"kg",1);
+  $("liEpsom").classList.toggle("off",!e);
+  $("qTong").innerHTML=q(n,"");
+}
+function renderSpray(){
+  const tank=S.tank, k=S.ntank, r=S.calbo;
+  $("tank").value=tank; $("ntank").value=k;
+  document.querySelectorAll("#calboSeg button").forEach(b=>b.classList.toggle("on",+b.dataset.v===r));
+  const f=tank/10;
+  const a=r*f;
+  $("perTankH").textContent=t("perTank",{t:fmt(tank,1)});
+  $("dCalbo").innerHTML=q(a,"ml",1);
+  $("totLine").textContent=k>1?t("totAll",{n:k,w:fmt(tank*k,1),a:fmt(a*k,1)}):"";
+  const y=BASE.yieldL*S.tongs;               // litres of concentrate from the Brew page
+  const tanks=a>0?Math.floor(y*1000/a):0;
+  $("covTanks").textContent=t("covTanks",{k:fmt(tanks)});
+  $("covLine").textContent=t("covLine",{y:fmt(y),r:fmt(a,1),t:fmt(tank,1),w:fmt(tanks*tank),n:S.tongs});
+}
+function renderCost(){
+  const n=S.tongs, e=S.epsom, y=BASE.yieldL*n;
+  ["pBamb","pCalc","pBor","mLo","mHi"].forEach(id=>$(id).value=S[id]);
+  $("pEps").value=S.pEps;
+  const isSmall=S.pBamb==PRESET.small.bamb&&S.pCalc==PRESET.small.calc&&S.pBor==PRESET.small.bor;
+  $("pSmall").classList.toggle("on",isSmall);
+  $("rowEps").style.display=e?"":"none";
+  const cB=BASE.bamb*n/4*S.pBamb, cC=BASE.calc*n/4*S.pCalc, cR=BASE.bor*n/1000*S.pBor;
+  const epsPrice=parseFloat(S.pEps); const hasEps=e&&isFinite(epsPrice)&&epsPrice>0;
+  const cE=hasEps?BASE.eps*n*epsPrice:0;
+  const rows=[["Bamboosa Extract",fmt(BASE.bamb*n)+" L",cB],["Calcite-M",fmt(BASE.calc*n)+" kg",cC],["Borax",fmt(BASE.bor*n)+" g",cR]];
+  if(e)rows.push(["Epsom Salt",fmt(BASE.eps*n,1)+" kg",hasEps?cE:null]);
+  $("costBody").innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]==null?"—":fmtRM(r[2])}</td></tr>`).join("");
+  const total=cB+cC+cR+cE, perL=total/y;
+  $("costH").textContent=t("costH",{n,y:fmt(y)});
+  $("cYield").textContent=fmt(y)+" L"; $("cTotal").textContent="RM "+fmtRM(total);
+  $("epsNote").hidden=!(e&&!hasEps);
+  $("cPerL").textContent=fmtRM(perL);
+  const lo=Math.min(S.mLo,S.mHi), hi=Math.max(S.mLo,S.mHi);
+  $("cMkt").textContent=lo===hi?fmt(lo):fmt(lo)+"–"+fmt(hi);
+  const sLo=Math.round((1-perL/hi)*100), sHi=Math.round((1-perL/lo)*100);
+  const sl=$("saveLine");
+  if(perL>=lo){sl.textContent=t("noSave");sl.style.color="#a12b2b";}
+  else{sl.style.color="";sl.textContent=sLo===sHi?t("saveOne",{lo:sLo}):t("save",{lo:Math.min(sLo,sHi),hi:Math.max(sLo,sHi)});}
+}
+const DAY=86400000;
+const dstr=d=>new Date(d).toLocaleDateString(LOCALE[lang],{day:"numeric",month:"short"});
+function renderLog(){
+  if(!$("bDate").value)$("bDate").value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const box=$("brews");
+  if(!brews.length){box.innerHTML=`<div class="empty">${t("empty")}</div>`;return;}
+  const today=new Date();today.setHours(0,0,0,0);
+  box.innerHTML=brews.slice().sort((a,b)=>b.start.localeCompare(a.start)).map(b=>{
+    const start=new Date(b.start+"T00:00:00"); const nights=Math.floor((today-start)/DAY);
+    const e=b.epsom?t("eYes"):t("eNo"); const y=fmt(BASE.yieldL*b.tongs);
+    let cls="",st="",meta="",bar=0;
+    if(b.filtered){cls="done";st=t("stDone");meta=t("metaDone",{n:b.tongs,e,d:dstr(start),df:dstr(new Date(b.filtered+"T00:00:00")),y});bar=100;}
+    else{
+      bar=Math.min(100,Math.max(0,nights/7*100));
+      if(nights<1)st=t("stSoak");else if(nights<7){cls="ready";st=t("stReady",{d:nights});}else{cls="ready";st=t("stFull");}
+      meta=t("metaBrew",{n:b.tongs,e,d:dstr(start),d1:dstr(new Date(start.getTime()+DAY)),d7:dstr(new Date(start.getTime()+7*DAY))});
+    }
+    return `<div class="brew ${cls}" data-id="${b.id}"><div class="top"><b>${dstr(start)} · ${b.tongs} × 20 L</b><span class="st">${st}</span></div>
+      <div class="meta">${meta}</div><div class="bar"><i style="width:${bar}%"></i></div>
+      <div class="acts">${b.filtered?"":`<button class="btn sm" data-act="filter">${t("filtered")}</button>`}<button class="btn sm danger" data-act="del">${t("del")}</button></div></div>`;
+  }).join("");
+}
+function renderAll(){renderBrew();renderSpray();renderCost();renderLog();}
+
+/* ---------- events ---------- */
+$("langBtn").onclick=()=>{lang=LANG_ORDER[(LANG_ORDER.indexOf(lang)+1)%3];localStorage.setItem("calbo.lang",lang);applyLang();};
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".tab").forEach(s=>s.classList.toggle("on",s.id==="tab-"+b.dataset.tab));
+  window.scrollTo({top:0});
+});
+const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
+const bindStep=(minus,plus,input,key,lo,hi,after)=>{
+  $(minus).onclick=()=>{S[key]=clamp((S[key]|0)-1,lo,hi);saveS();after();};
+  $(plus).onclick=()=>{S[key]=clamp((S[key]|0)+1,lo,hi);saveS();after();};
+  $(input).oninput=()=>{const v=parseInt($(input).value);if(isFinite(v)){S[key]=clamp(v,lo,hi);saveS();after();}};
+};
+bindStep("tMinus","tPlus","tongs","tongs",1,99,()=>{renderBrew();renderSpray();renderCost();});
+bindStep("nMinus","nPlus","ntank","ntank",1,999,renderSpray);
+$("epsom").onclick=()=>{S.epsom=!S.epsom;saveS();renderBrew();renderCost();};
+$("tank").oninput=()=>{S.tank=num("tank",10)||10;saveS();renderSpray();};
+document.querySelectorAll("#calboSeg button").forEach(b=>b.onclick=()=>{S.calbo=+b.dataset.v;saveS();renderSpray();});
+["pBamb","pCalc","pBor","mLo","mHi"].forEach(id=>$(id).oninput=()=>{S[id]=num(id,S[id]);saveS();renderCost();});
+$("pEps").oninput=()=>{S.pEps=$("pEps").value;saveS();renderCost();};
+$("pSmall").onclick=()=>{Object.assign(S,{pBamb:PRESET.small.bamb,pCalc:PRESET.small.calc,pBor:PRESET.small.bor});saveS();renderCost();};
+// log form (its own tongs/epsom, independent of the calculator)
+let bT=1,bE=false;
+$("bMinus").onclick=()=>{bT=clamp(bT-1,1,99);$("bTongs").value=bT;};
+$("bPlus").onclick=()=>{bT=clamp(bT+1,1,99);$("bTongs").value=bT;};
+$("bTongs").oninput=()=>{const v=parseInt($("bTongs").value);if(isFinite(v))bT=clamp(v,1,99);};
+$("bEpsom").onclick=()=>{bE=!bE;$("bEpsom").setAttribute("aria-checked",bE);};
+$("addBrew").onclick=()=>{
+  const d=$("bDate").value;if(!d){$("bDate").focus();return;}
+  brews.push({id:Date.now().toString(36),start:d,tongs:bT,epsom:bE,filtered:null});saveB();renderLog();
+};
+$("brews").onclick=ev=>{
+  const btn=ev.target.closest("button[data-act]");if(!btn)return;
+  const id=btn.closest(".brew").dataset.id;const b=brews.find(x=>x.id===id);if(!b)return;
+  if(btn.dataset.act==="filter"){b.filtered=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);}
+  else if(btn.dataset.act==="del"){if(!confirm(t("confirmDel")))return;brews=brews.filter(x=>x.id!==id);}
+  saveB();renderLog();
+};
+
+applyLang();
+
+/* ---------- service worker (skipped on file://) ---------- */
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
