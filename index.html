@@ -146,11 +146,30 @@ nav button{flex:1;border:0;background:#fff;color:var(--ink-3);font-size:.72rem;f
 nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav button.on{color:var(--plum)}
 footer{font-size:.76rem;color:var(--ink-3);padding:6px 2px 0;line-height:1.5}
+
+/* first-launch language picker */
+#langPick{position:fixed;inset:0;z-index:50;background:var(--plum);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+#langPick[hidden]{display:none}
+#langPick .lp-t{font-size:1.5rem;font-weight:800;margin:0 0 4px}
+#langPick .lp-s{font-size:.95rem;opacity:.85;margin:0 0 28px;line-height:1.6}
+#langPick .lp-btns{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px}
+#langPick button{border:0;background:#fff;color:var(--plum);border-radius:var(--r);padding:16px;font-size:1.2rem;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+#langPick button small{font-size:.85rem;font-weight:600;color:var(--ink-3)}
+#langPick button:active{background:var(--plum-tint)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media (min-width:640px){main{padding-top:20px}.settings{padding:14px 16px 6px}}
 </style>
 </head>
 <body>
+<div id="langPick" hidden role="dialog" aria-modal="true" aria-label="Language">
+  <p class="lp-t">自制钙硼液 · DIY CalBo</p>
+  <p class="lp-s">请选择语言<br>Choose your language<br>Pilih bahasa</p>
+  <div class="lp-btns">
+    <button data-lang="zh">中文<small>Chinese</small></button>
+    <button data-lang="en">English<small>EN</small></button>
+    <button data-lang="ms">Malay<small>BM</small></button>
+  </div>
+</div>
 <header>
   <div class="t"><h1 data-i="title">自制钙硼液</h1><div class="sub" data-i="subtitle">Mr. Ganick 配方 · 泡制 · 稀释 · 成本</div></div>
   <button id="langBtn" aria-label="Language">中文</button>
@@ -367,7 +386,8 @@ const PRESET={
 
 /* ---------- state ---------- */
 const $=id=>document.getElementById(id);
-let lang=localStorage.getItem("calbo.lang")||"zh";
+const savedLang=localStorage.getItem("calbo.lang");
+let lang=savedLang||"zh";
 let S=Object.assign({tongs:1,epsom:false,tank:10,ntank:1,calbo:20,pBamb:62,pCalc:39,pBor:8,pEps:"",mLo:40,mHi:45},JSON.parse(localStorage.getItem("calbo.settings")||"{}"));
 let brews=JSON.parse(localStorage.getItem("calbo.brews")||"[]");
 const saveS=()=>localStorage.setItem("calbo.settings",JSON.stringify(S));
@@ -502,6 +522,14 @@ $("brews").onclick=ev=>{
 };
 
 applyLang();
+
+/* first launch: ask for the language once, then persist it */
+if(!savedLang){
+  $("langPick").hidden=false;
+  document.querySelectorAll("#langPick button").forEach(b=>b.onclick=()=>{
+    lang=b.dataset.lang;localStorage.setItem("calbo.lang",lang);applyLang();$("langPick").hidden=true;
+  });
+}
 
 /* ---------- service worker (skipped on file://) ---------- */
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
